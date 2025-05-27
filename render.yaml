@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: note-qualification-dep
+    env: python
+    region: oregon  # Or use 'frankfurt', 'singapore', etc. (optional)
+    plan: free
+    buildCommand: ""
+    startCommand: uvicorn qualification:app --host=0.0.0.0 --port=8000
+    envVars:
+      - key: AZURE_OPENAI_ENDPOINT
+        value: https://feedback1.openai.azure.com/
+      - key: AZURE_OPENAI_API_KEY
+        value:  
+      - key: AZURE_DEPLOYMENT_NAME
+        value: gpt-4-feedback
+      - key: AZURE_OPENAI_API_VERSION
+        value: 2024-12-01-preview
