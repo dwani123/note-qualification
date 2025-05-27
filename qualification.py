@@ -4,12 +4,16 @@ import openai
 import os
 import logging
 from dotenv import load_dotenv
-
+from openai.types import OpenAIError 
 # Load environment variables from .env file
 load_dotenv()
 
 # Setup FastAPI
 app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "FastAPI is running! Welcome to qualification-note!"}
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +33,7 @@ class EmailData(BaseModel):
 @app.post("/generate-qualification-note")
 async def generate_qualification_note(data: EmailData):
     prompt = f"""
-You are a sales assistant. Analyze the following email body and generate a structured qualification note.
+You are the assistant specific towards the generating qualification. Analyze the following email body and generate a structured qualification note.
 
 Email Body:
 {data.email_body}
