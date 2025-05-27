@@ -4,7 +4,6 @@ import openai
 import os
 import logging
 from dotenv import load_dotenv
-from openai import OpenAIError
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,12 +21,14 @@ logger = logging.getLogger(__name__)
 
 # Load Azure OpenAI configuration from environment
 openai.api_type = "azure"
-openai.api_base = os.getenv("AZURE_OPENAI_ENDPOINT")          # e.g., https://your-resource.openai.azure.com/
-openai.api_version = os.getenv("AZURE_OPENAI_API_VERSION")    # e.g., 2024-12-01-preview
-openai.api_key = os.getenv("AZURE_OPENAI_API_KEY")            # stored in .env
-AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_NAME")    # e.g., gpt-4-note
+openai.api_base = os.getenv("AZURE_OPENAI_ENDPOINT")
+openai.api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+openai.api_key = os.getenv("AZURE_OPENAI_API_KEY")
+AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_NAME")
 
-# Pydantic model for request body
+logger.info(f"Loaded deployment: {AZURE_DEPLOYMENT}")
+
+# Pydantic model
 class EmailData(BaseModel):
     email_body: str
 
@@ -35,22 +36,22 @@ class EmailData(BaseModel):
 async def generate_qualification_note(data: EmailData):
     prompt = f"""
 You are the assistant specific towards the generating qualification. Analyze the following email body and generate a structured qualification note.
-
 Email Body:
 {data.email_body}
 
 Return the result in JSON format with the following fields:
 {{
-  "salutation": "string (e.g., Dear [Client Name],)",
   "customer_overview": "string (brief overview of the customer)",
   "customer_details": {{
     "name": "string (e.g., Company Name)",
     "Annual Revenue": "string (e.g., $10M)",
+    "location": "string (e.g., San Francisco, CA)",
     "No. of Employees": "string (e.g., 200)"
   }},
   "opportunity_overview": "string (summary of the opportunity)",
   "key_highlights": "string (main points or quotes from the email)",
   "target_timeline": "string (expected timeline mentioned)",
+  "engagement_phases": "string (phases of engagement such as discovery, planning, execution, etc.)",
   "tcv_estimate": "string (Total Contract Value estimate if any)"
 }}
 
@@ -74,13 +75,16 @@ Only return valid JSON, nothing else.
         logger.info("Response generated successfully.")
         return {"qualification_note": result}
 
-    except openai.error.OpenAIError as e:
-        logger.error(f"OpenAI API error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"OpenAI API Error: {str(e)}")
+    except Exception as e:
+        logger.exception("Unexpected error occurred")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
 
     except Exception as e:
         logger.exception("Unexpected error occurred")
         raise HTTPException(status_code=500, detail="Internal Server Error")
- 
+
+# Correct location for __main__
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
