@@ -3,3 +3,6 @@ uvicorn
 openai==0.28.1
 python-dotenv
 gunicorn
+python-multipart
+pymupdf
+python-docx
